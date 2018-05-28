@@ -1,5 +1,5 @@
 Arquivos do projeto de infraestrutura de comunicaçao 
 grupo:
 	Paulo Diogenes Silva Salgado Filho- pdssf
-	Pedro Kempber Brandt- PedroKBrandt
+	Pedro Kempter Brant- PedroKBrant
 	Victor Godoy- vgs2
