@@ -1,5 +1,8 @@
+#to avoid problems, go to the server folder and then run this file
+
 from socket import *
 import os
+import pickle #to send and receive lists
 
 #checks if username is already in use, if not will create
 #a new folder for the user
@@ -72,6 +75,16 @@ while 1:
 		#to be implemented
 		elif(commandLine.decode() == 'PUT'):
 			connectionSocket.send(commandLine)
+		
+		#ls
+		elif (commandLine.decode()=='ls'):
+			#path = os.path.abspath(userName)
+			connectionSocket.send(commandLine)
+			sendingList = os.listdir(userName.decode())
+			#sendingList = sendingList.encode()
+			print(sendingList)
+			sendingList = pickle.dumps(sendingList)
+			connectionSocket.send(sendingList)
 
 		elif(commandLine.decode() == 'exit'):
 			break

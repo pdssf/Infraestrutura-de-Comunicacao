@@ -1,5 +1,8 @@
+#to avoid problems, go to the client folder and then run this file
+
 from socket import *
 from builtins import input
+import pickle #to send and receive lists
 
 
 #initial config
@@ -14,9 +17,9 @@ commandLine = ''
 userName = input( 'Please, type your username:' )
 clientSocket.send(userName.encode())
 while(commandLine != 'exit'):
-    commandLine = input( 'Please, type your command: GET, PUT, clientSend or exit \n' )
-    clientSocket.send(commandLine.encode())
+    commandLine = input( 'Please, type your command: GET, PUT, clientSend, ls or exit \n' )
     #sends command to the server and wait a response
+    clientSocket.send(commandLine.encode())
     print('Waiting for command line')
     serverResponse = clientSocket.recv(1024)
     print('Resposta do servidor', serverResponse.decode())
@@ -54,6 +57,12 @@ while(commandLine != 'exit'):
     #to be implemented
     elif(serverResponse.decode() == 'PUT'):
         print('Client received PUT back')
+
+    #list files in the user's folder
+    elif(serverResponse.decode() == 'ls'):
+        receivingList = clientSocket.recv(1024)
+        receivingList = pickle.loads(receivingList)
+        print(receivingList)
 
     elif(commandLine == 'exit'):
         break
