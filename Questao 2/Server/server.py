@@ -29,11 +29,33 @@ while 1:
 		commandLine = connectionSocket.recv(1024)
 		print('Received. Client response: ',commandLine.decode())
 
-		#possible user commands
-		if(commandLine.decode() == 'GET'):
+		#possible user commands:
+		if(commandLine.decode() == 'clientSend'):
+			connectionSocket.send('helo send me file'.encode())
+			#recebe fileName
+			fileName = connectionSocket.recv(1024)
+			fileName = fileName.decode()
+			print('received fileName:', fileName)
+			#concatena 'username' '/' 'fileName'
+			path = userName.decode() + '/' + fileName
+			receivingFile = open(path,'wb')
+			#starts to receive the file
+			receivingPart = connectionSocket.recv(1024)
+			while(receivingPart):
+				receivingFile.write(receivingPart)
+				receivingPart = connectionSocket.recv(1024)
+				if len(receivingPart) < 1024:
+					break
+			receivingFile.close()
+			print('received file')
+
+
+		elif(commandLine.decode() == 'GET'):
 			connectionSocket.send(commandLine)
+
 		elif(commandLine.decode() == 'PUT'):
 			connectionSocket.send(commandLine)
+
 		elif(commandLine.decode() == 'exit'):
 			break
 		else:
