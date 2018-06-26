@@ -8,15 +8,16 @@ serverPort = 12000
 #Declarando o objeto socket cliente param.1 = IPV4;param.2 = sock UDP
 clientSocket = socket(AF_INET, SOCK_DGRAM)
 
-
 #aplicação enviará essa menssagem
-message = input('Input lowercase sentence:')
+message = input('digite em letras minusculas:')
 
 while(len(message)> 1):
     #função de passagem de menssagem deve ser codificada antes de mandar
     clientSocket.sendto(message.encode(),(serverName, serverPort))
-    #Resposta do servidor a string deve ser decodificada antes de imprimir
+
+    #aguarda resposta do servidor 
     modifiedMessage, serverAddress = clientSocket.recvfrom(2048)
+    #Resposta do servidor a string deve ser decodificada antes de imprimir
     print (modifiedMessage.decode('UTF-8','strict'))
     message = input('Input lowercase sentence:')
 

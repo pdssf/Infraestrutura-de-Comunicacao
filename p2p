@@ -1,0 +1,114 @@
+import socket
+import threading
+import select
+import time
+
+PORT = 1776
+
+def main():
+
+    class Server(threading.Thread):
+            def __init__(self):
+                threading.Thread.__init__(self)
+                self.running = 1
+                self.conn = None
+                self.addr = None
+                self.total = 0
+            def run(self):
+                HOST = ''
+               
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                s.bind((HOST,PORT))
+                s.listen(1)
+                print("Server running ...")
+                self.conn, self.addr = s.accept()
+                # Select loop for listen
+                while self.running == True:
+                    inputready,outputready,exceptready \
+                      = select.select ([self.conn],[self.conn],[])
+                    for input_item in inputready:
+                        # Handle sockets
+                        data = self.conn.recv(1024)
+                        if data:
+                            print str(self.addr) + ":    " + data
+                            self.total = self.total + int(data)
+                            print "total    " + str(self.total)
+                        else:
+                            break
+                    time.sleep(0)
+
+            def kill(self):
+                self.running = 0
+     
+    class Client(threading.Thread):
+            
+            def __init__(self):         
+                threading.Thread.__init__(self)
+                self.host = None
+                self.sock = None
+                self.running = 1
+            
+            def run(self):             
+                self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.sock.connect((self.host, PORT))
+                print("connected")
+                # Select loop for listen
+                while self.running == True:
+                    inputready,outputready,exceptready \
+                      = select.select ([self.sock],[self.sock],[])
+                    for input_item in inputready:
+                        # Handle sockets
+                        data = self.sock.recv(1024)
+                        if data:
+                            print "server" + ":    " + data
+                        else:
+                            break
+                    time.sleep(0)
+           
+            def kill(self):         
+                self.running = 0
+                
+    class Text_Input(threading.Thread):
+           
+            def __init__(self):
+                threading.Thread.__init__(self)
+                self.running = 1
+           
+            def run(self):
+                while self.running == True:
+                  text = raw_input('')
+                  try:
+                      client.sock.sendall(text)
+                  except:
+                      Exception
+                  try:
+                      server.conn.sendall(text)
+                  except:
+                      Exception
+                  time.sleep(0)
+           
+            def kill(self):
+                self.running = 0
+
+    # Prompt, object instantiation, and threads start here.
+
+    ip_addr = raw_input('What IP (or type listen)?: ')
+
+    if ip_addr == 'listen':
+        server = Server()
+        client = Client()
+        server.start()
+        text_input = Text_Input()
+        text_input.start()
+        
+    else:
+        server = Server()
+        client = Client()
+        client.host = ip_addr
+        text_input = Text_Input()
+        client.start()
+        text_input.start()
+
+if __name__ == "__main__":
+    main()
