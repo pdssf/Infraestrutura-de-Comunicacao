@@ -1,12 +1,13 @@
-#to avoid problems, go to the server folder and then run this file
+#devido a como o manuseamento de arquivos é tratado neste programa
+#o mesmo deve ser executado diretamente da pasta Server
 
 from socket import *
 import os
-import pickle #to send and receive lists
+import pickle
 import _thread
 
-#checks if username is already in use, if not will create
-#a new folder for the user
+#Checa se o nome de usuário já está em uso, se nao estiver em uso
+#uma nova pasta com esse nome sera criada
 def checkUserName( userName ):
 	if not os.path.exists(userName):
 		print('New user, creating new directory..\n')
@@ -19,7 +20,8 @@ def checkUserName( userName ):
 		print('Old user: ', userName.decode())
 		return 'old'
 
-#adds or removes the file from the database
+#adiciona ou remove uma entrada da database, baseando-se no comando
+#do usuario
 def databaseHandler(userName, mode, fileName):
 	databasePath = userName.decode() + '.txt'
 	database = open(databasePath, 'a+')
@@ -51,10 +53,10 @@ def databaseHandler(userName, mode, fileName):
 				database.write(line)
 		database.close()
 
-#runs for each client, one per thread
+#funcao que representa o corpo do programa, será rodado para cada cliente
 def connected (connectionSocket, addr):
 	userName = connectionSocket.recv(1024)
-	#login
+	#recebe o login
 	commandLine = ''
 	result = checkUserName(userName)
 	while(commandLine != 'exit'):
@@ -63,30 +65,37 @@ def connected (connectionSocket, addr):
 		commandLine = connectionSocket.recv(1024)
 		print('Received. Client response: ',commandLine.decode())
 
-		#possible user commands:
-		#receives file from client
+		#cada if está ligado a um possível comando dado pelo cliente
+		#POST: recebe o nome do arquivo, abre o mesmo e escreve 
+		#1024 bytes a cada loop. Quando recebe 'end', finaliza
+		# 
 		if(commandLine.decode() == 'POST'):
 			connectionSocket.send('helo send me file'.encode())
-			#receives fileName
+			#recebe o nome do arquivo
 			fileName = connectionSocket.recv(1024)
 			fileName = fileName.decode()
 			print('received fileName:', fileName)
-			#concatenate 'username' '/' 'fileName'
+			
 			path = userName.decode() + '/' + fileName
 			receivingFile = open(path,'wb')
-			#starts to receive the file
-			receivingPart = connectionSocket.recv(1024)
-			while(receivingPart):
-				receivingFile.write(receivingPart)
-				if(receivingPart != 'end'.encode()):
-					receivingPart = connectionSocket.recv(1024)
-				if len(receivingPart) < 1024:
-					break
+			#começa a receber o arquivo
+			#receivingPart = connectionSocket.recv(1024)
+			while(1):
+				receivingPart = connectionSocket.recv(1024)
+				print('Recebeu Data', len(receivingPart))
+				try:
+					if(receivingPart.decode() == 'end'):
+						break
+				except:
+					receivingFile.write(receivingPart)
+					
+				
 			receivingFile.close()
 			print('received file')
 			databaseHandler(userName, 'POST', fileName)
 
-		#sends file to client
+		#GET: recebe o nome do arquivo e para cada loop
+		#le 1024 bytes e os envia para o cliente
 		elif(commandLine.decode() == 'GET'):
 			connectionSocket.send(commandLine)
 			print('waiting for file name')
@@ -99,11 +108,14 @@ def connected (connectionSocket, addr):
 			while (sendingPart):
 				connectionSocket.send(sendingPart)
 				sendingPart = sendingFile.read(1024)
+			connectionSocket.send('end'.encode())
 			sendingFile.close()
 			print('sended file')
 
 		
-		#ls
+		#ls: le o arquivo da database, o transformando em lista
+		# e utilizando o pickle.dumps, transforma essa lista em uma
+		# forma utilizavel pelo socket
 		elif (commandLine.decode()=='ls'):
 			#path = os.path.abspath(userName)
 			connectionSocket.send(commandLine)
@@ -113,6 +125,8 @@ def connected (connectionSocket, addr):
 			sendingList = pickle.dumps(sendingList)
 			connectionSocket.send(sendingList)
 		
+		#DELETE: recebe o nome de um arquivo e o deleta da pasta
+		# e da database
 		elif (commandLine.decode() == 'DELETE'):
 			connectionSocket.send(commandLine)
 			print('Waiting for fileName')
@@ -136,9 +150,7 @@ serverSocket = socket(AF_INET, SOCK_STREAM)
 serverSocket.bind(('',serverPort))
 serverSocket.listen(1)
 print ('The server is ready to receive')
-#tudo igual
+#recebe uma conexao tcp e a atribui a uma thread, repete para cada nova conexao
 while 1:
 	connectionSocket, addr = serverSocket.accept()
-	_thread.start_new_thread(connected, tuple([connectionSocket, addr]))
-	#igual
-	
+	_thread.start_new_thread(connected, tuple([connectionSocket, addr]))	
