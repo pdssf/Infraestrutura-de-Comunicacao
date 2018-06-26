@@ -17,7 +17,7 @@ commandLine = ''
 userName = input( 'Please, type your username:' )
 clientSocket.send(userName.encode())
 while(commandLine != 'exit'):
-    commandLine = input( 'Please, type your command: GET, PUT, clientSend, ls or exit \n' )
+    commandLine = input( 'Please, type your command: GET, POST, ls, DELETE or exit \n' )
     #sends command to the server and wait a response
     clientSocket.send(commandLine.encode())
     print('Waiting for command line')
@@ -27,7 +27,7 @@ while(commandLine != 'exit'):
     #sends file to server
     if(serverResponse.decode() == 'helo send me file'):
         #digita nome do arquivo
-        fileName = input('Digite o nome do arquivo a ser enviado: \n')
+        fileName = input('Type the name of the file to be sended: \n')
         #envia nome do arquivo
         clientSocket.send(fileName.encode())
         sendingFile = open(fileName,'rb')
@@ -35,6 +35,7 @@ while(commandLine != 'exit'):
         while (sendingPart):
             clientSocket.send(sendingPart)
             sendingPart = sendingFile.read(1024)
+        clientSocket.send(''.encode())
         sendingFile.close()
         print('sended file')
         #clientSocket.shutdown(clientSocket.SHUT_WR)
@@ -63,6 +64,11 @@ while(commandLine != 'exit'):
         receivingList = clientSocket.recv(1024)
         receivingList = pickle.loads(receivingList)
         print(receivingList)
+
+    elif (serverResponse.decode() == 'DELETE'):
+        fileName = input('What file would you like to delete?\n')
+        clientSocket.send(fileName.encode())
+        pass
 
     elif(commandLine == 'exit'):
         break
